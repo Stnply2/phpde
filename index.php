@@ -1,22 +1,26 @@
 <?php
-require_once('config.php');
+require_once('config.php'); // Einbinden der Konfigurationsdatei für Datenbankverbindung und andere Einstellungen
 
+// Überprüfen, ob der Benutzer angemeldet ist, sonst Umleitung zur Login-Seite
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: login.php");
     exit;
 }
 
+// Überprüfen, ob die Benutzer-ID in der Session vorhanden ist, sonst Umleitung zur Login-Seite
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
+// Logout-Funktion
 if (isset($_POST['logout'])) {
     session_destroy();
     header("Location: login.php");
     exit;
 }
 
+// Abrufen aller Kontakte des angemeldeten Benutzers aus der Datenbank
 $stmt = $pdo->prepare("SELECT * FROM contacts WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $contacts = $stmt->fetchAll();
@@ -26,6 +30,7 @@ $contacts = $stmt->fetchAll();
 <html>
 <head>
     <title>Adressbuch</title>
+	    <!-- Einbinden von externen Stylesheets und Schriftarten -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dialog-polyfill/0.5.10/dialog-polyfill.min.css">
@@ -90,7 +95,7 @@ $contacts = $stmt->fetchAll();
 </head>
 <body>
 <div class="mdl-layout mdl-js-layout">
-    <header class="mdl-layout__header">
+    <header class="mdl-layout__header">   <!-- Kopfzeile mit Benutzername, Suchfeld und Logout-Button -->
         <div class="mdl-layout__header-row">
             <span class="username-display">Benutzername: <?php echo isset($_SESSION['username']) ? $_SESSION['username'] : 'Unbekannt'; ?></span>
             <span class="mdl-layout-title">Kontakte</span>
@@ -111,7 +116,7 @@ $contacts = $stmt->fetchAll();
     </header>
     <main class="mdl-layout__content">
         <ul class="mdl-list" id="contactList">
-            <?php foreach ($contacts as $contact) { ?>
+            <?php foreach ($contacts as $contact) { ?>     <!-- Anzeigen jedes Kontakts in der Liste mit Optionen zum Anzeigen, Bearbeiten und Löschen -->
                 <li class="mdl-list__item">
                     <img src="<?php echo !empty($contact['image']) ? $contact['image'] : 'https://www.fonetool.com/screenshot/de/others/contacts-sync/contacts.png'; ?>" class="contact-image" onclick="window.location.href='contact_details.php?id=<?php echo $contact['id']; ?>'" />
                     <span class="mdl-list__item-primary-content" onclick="window.location.href='contact_details.php?id=<?php echo $contact['id']; ?>'">
@@ -122,8 +127,8 @@ $contacts = $stmt->fetchAll();
                     <span class="delete-contact material-icons" onclick="deleteContact(<?php echo $contact['id']; ?>)">delete</span>
                 </li>
             <?php } ?>
-        </ul>
-        <dialog class="mdl-dialog">
+        </ul>      <!-- Dialog zum Hinzufügen eines neuen Kontakts -->
+        <dialog class="mdl-dialog"> 
             <h4 class="mdl-dialog__title">Kontakt hinzufügen</h4>
             <div class="mdl-dialog__content">
                 <form id="addContactForm" action="add_contact.php" method="post" enctype="multipart/form-data">
@@ -146,41 +151,42 @@ $contacts = $stmt->fetchAll();
         </dialog>
     </main>
 </div>
-
+<!-- Einbinden von externen JavaScript-Dateien und Skripten für Dialog- und Suchfunktionalität -->
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dialog-polyfill/0.5.10/dialog-polyfill.min.js"></script>
 <script>
-    var dialog = document.querySelector('dialog');
-    if (!dialog.showModal) {
+    var dialog = document.querySelector('dialog');  // Dialog-Element auswählen
+    if (!dialog.showModal) {  // Polyfill für den Dialog, falls die showModal-Funktion nicht unterstützt wird
         dialogPolyfill.registerDialog(dialog);
     }
 
+// Event-Listener für den "Kontakt hinzufügen"-Button
     document.getElementById('addContactButton').addEventListener('click', function () {
-        document.getElementById('addContactForm').reset();
-        dialog.showModal();
+        document.getElementById('addContactForm').reset();  // Formular zurücksetzen, bevor der Dialog angezeigt wird
+        dialog.showModal();  // Dialog zum Hinzufügen eines neuen Kontakts anzeigen
     });
 
-    dialog.querySelector('.close').addEventListener('click', function () {
-        dialog.close();
+    dialog.querySelector('.close').addEventListener('click', function () { // Event-Listener für den Schließen-Button im Dialog
+        dialog.close(); //Dialog schließen
     });
 
-    function deleteContact(contactId) {
-        if (confirm('Möchten Sie diesen Kontakt wirklich löschen?')) {
-            window.location.href = 'delete_contact.php?id=' + contactId;
+    function deleteContact(contactId) { // Funktion zum Löschen eines Kontakts
+        if (confirm('Möchten Sie diesen Kontakt wirklich löschen?')) {  // Bestätigungsdialog anzeigen
+            window.location.href = 'delete_contact.php?id=' + contactId;  // Bei Bestätigung zur Lösch-URL weiterleiten
         }
     }
 
-    function searchContacts() {
+    function searchContacts() {  // Funktion zur Suche nach Kontakten
         var input, filter, ul, li, span, i, txtValue;
-        input = document.getElementById('search');
+        input = document.getElementById('search');  // Suchfeld-Element und Filtertext holen
         filter = input.value.toUpperCase();
-        ul = document.getElementById('contactList');
+        ul = document.getElementById('contactList');  // Liste der Kontaktelemente holen
         li = ul.getElementsByTagName('li');
 
-        for (i = 0; i < li.length; i++) {
-            span = li[i].getElementsByClassName('mdl-list__item-primary-content')[0];
+        for (i = 0; i < li.length; i++) {  // Durch alle Listenelemente iterieren
+            span = li[i].getElementsByClassName('mdl-list__item-primary-content')[0]; //Text des Kontakts holen
             txtValue = span.textContent || span.innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {  // Kontaktelement anzeigen oder verstecken, basierend auf Suchtext
                 li[i].style.display = '';
             } else {
                 li[i].style.display = 'none';

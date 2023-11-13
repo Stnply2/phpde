@@ -1,21 +1,25 @@
 <?php
-require_once('config.php');
+require_once('config.php'); // Einbinden der Konfigurationsdatei für Datenbankverbindung und andere Einstellungen
 
+// Überprüfen, ob der Benutzer eingeloggt ist. Falls nicht, Weiterleitung zur Login-Seite
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: login.php");
     exit;
 }
 
+// Überprüfen, ob eine Kontakt-ID in der URL übergeben wurde. Falls nicht, Skript beenden
 if (!isset($_GET['id'])) {
     die("Keine Kontakt-ID angegeben.");
 }
 
-$contactId = $_GET['id'];
+$contactId = $_GET['id']; // Speichern der übergebenen Kontakt-ID in einer Variablen
 
+// Vorbereiten und Ausführen einer SQL-Abfrage, um den Kontakt mit der gegebenen ID zu holen
 $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = ?");
 $stmt->execute([$contactId]);
 $contact = $stmt->fetch();
 
+// Überprüfen, ob der Kontakt in der Datenbank existiert. Falls nicht, Skript beenden
 if (!$contact) {
     die("Kontakt nicht gefunden.");
 }
@@ -24,13 +28,13 @@ if (!$contact) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kontakt bearbeiten</title>
+    <title>Kontakt bearbeiten</title>     <!-- Einbindung von Google Fonts und Material Design Lite (MDL) für das Styling -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
 <style>
 
         .right-shift {
-            margin-left: 50px; /* oder die gewünschte Entfernung */
+            margin-left: 50px; /* Abstand nach links für das Formular */
         }
     </style>
 
@@ -43,11 +47,13 @@ if (!$contact) {
         </div>
     </header>
     <main class="mdl-layout__content">
-        <form action="update_contact.php" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="id" value="<?php echo $contact['id']; ?>">
+        <form action="update_contact.php" method="post" enctype="multipart/form-data">  <!-- Formular für das Aktualisieren des Kontakts -->
+            <input type="hidden" name="id" value="<?php echo $contact['id']; ?>">  <!-- Versteckte Felder für die Kontakt-ID und die Herkunft der Anfrage -->
             <input type="hidden" name="from_edit" value="true">
            
-		   <div class="right-shift">
+		   <div class="right-shift">      <!-- Formularfelder für die verschiedenen Kontaktinformationen -->
+		    <!-- Hier folgen die verschiedenen Eingabefelder für die Kontaktinformationen wie Anrede, Vorname, Nachname, Firma, Email usw. -->
+                <!-- Jedes Feld ist mit einem Label versehen und zeigt den aktuellen Wert aus der Datenbank an -->
 		             <div class="mdl-textfield mdl-js-textfield">
                 <input class="mdl-textfield__input" type="text" id="salutation" name="salutation" value="<?php echo $contact['salutation']; ?>">
                 <label class="mdl-textfield__label" for="salutation">Anrede</label>
@@ -111,12 +117,13 @@ if (!$contact) {
     </div>
 
 
+ <!-- Eingabefeld für das Hochladen eines Bildes -->
             <div class="mdl-textfield mdl-js-textfield">
                 Bild:(Max. 5MB, JPEG, PNG, GIF, SVG) <input type="file" name="image"> <!-- Changed the name attribute to "image" to match update_contact.php -->
             </div>
 			
 			
-
+                <!-- Button zum Speichern der Änderungen -->
             <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
                 Änderungen speichern
             </button>
@@ -124,7 +131,10 @@ if (!$contact) {
     </main>
 </div>
 
+<!-- Einbindung des MDL JavaScript für interaktive Elemente -->
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+<!-- JavaScript-Funktion zur Validierung der geografischen Eingaben -->
 
 <script>
         function validateGeoInput(event) {

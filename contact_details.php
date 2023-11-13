@@ -1,25 +1,32 @@
 <?php
+// Einbinden der Konfigurationsdatei
 require_once('config.php');
 
+// Überprüfen, ob der Benutzer angemeldet ist. Wenn nicht, Umleitung zur Login-Seite
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: login.php");
     exit;
 }
 
+// Überprüfen, ob eine Kontakt-ID in der URL übergeben wurde
 if (!isset($_GET['id'])) {
-    die("Keine Kontakt-ID angegeben.");
+    die("Keine Kontakt-ID angegeben."); // Beenden des Skripts, wenn keine ID vorhanden ist
 }
 
+// Speichern der Kontakt-ID aus der GET-Anfrage
 $contactId = $_GET['id'];
 
+// Vorbereiten und Ausführen der SQL-Abfrage, um den Kontakt aus der Datenbank zu holen
 $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = ?");
 $stmt->execute([$contactId]);
-$contact = $stmt->fetch();
+$contact = $stmt->fetch(); // Speichern des abgerufenen Kontakts in einer Variablen
 
+// Überprüfen, ob der Kontakt existiert
 if (!$contact) {
-    die("Kontakt nicht gefunden.");
-}
+    die("Kontakt nicht gefunden."); // Beenden des Skripts, wenn der Kontakt nicht gefunden wird
+} 
 
+// Zusammenstellen der vollständigen Telefonnummer aus den einzelnen Teilen
 $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' . $contact['phone'];
 ?>
 
@@ -27,10 +34,12 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
 <html>
 <head>
     <title>Kontaktdetails</title>
+	    <!-- Einbindung von Google Icons und Material Design Lite CSS -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <style>
-	
+	        /* Stildefinitionen für verschiedene Elemente der Seite */
+			
 	.contact-details, #map {
     display: inline-block;
     vertical-align: top;
@@ -47,7 +56,7 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
 }
 
 
-        /* Ihr CSS-Code hier */
+
         body {
             background-color: #f4f4f4;
         }
@@ -102,23 +111,23 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
         }
         /* CSS für das Modal */
         .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1; /* Sit on top */
+            display: none; /* Standardmäßig versteckt */
+            position: fixed;
+            z-index: 1;
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgb(0,0,0); /* Fallback color */
-            background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+            width: 100%; /* Volle Breite */
+            height: 100%; /* Volle Höhe */
+            overflow: auto; /* Scrollen erlauben, falls erwünscht */
+            background-color: rgb(0,0,0); /
+            background-color: rgba(0,0,0,0.9); 
         }
-        /* Modal Content (Image) */
+        /* Modal Content (Bild) */
    .modal-content {
     display: block;
 	 border-radius: 0; 
     max-width: 700px; /* Maximale Breite des Bildes */
-    width: 25%; /* Setzen Sie die Breite des Bildes auf 50% für größere Bildschirme, es wird aber nicht breiter als 700px sein. */
+    width: 25%; 
     margin: 15% auto; /* 15% von oben und zentriert */
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19); /* Optional: Schatten für das Bild */
 }
@@ -129,7 +138,7 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
         align-items: center; /* vertikal zentrieren */
         justify-content: center; /* horizontal zentrieren */
     }
-        /* Add Animation - Zoom in the Modal */
+        /* Hinzufügen von Animation - Zoom in das Modal */
         .modal-content, #caption { 
             animation-name: zoom;
             animation-duration: 0.6s;
@@ -138,7 +147,7 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
             from {transform:scale(0)}
             to {transform:scale(1)}
         }
-        /* The Close Button */
+        /* Der 'close' Button */
         .close {
             position: absolute;
             top: 15px;
@@ -166,27 +175,33 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
 
 <div class="mdl-layout mdl-js-layout">
     <main class="mdl-layout__content">
+	        <!-- Anzeige der Kontaktinformationen -->
         <div class="mdl-card mdl-shadow--2dp" style="margin: 2em; padding: 2em;" id="details">
-            <!-- Image used to trigger the modal -->
+              <!-- Bild des Kontakts, das beim Klicken das Modal öffnet -->
             <img id="myImg" src="<?php echo !empty($contact['image']) ? $contact['image'] : 'server/contacts.png'; ?>" alt="Kontaktbild">
-            <h2 class="contact-info">
-                <?php echo $contact['salutation'] . ' ' . $contact['first_name'] . ' ' . $contact['last_name']; ?>
+            <h2 class="contact-info"> 
+                <?php echo $contact['salutation'] . ' ' . $contact['first_name'] . ' ' . $contact['last_name']; ?> 
+			<!-- Bearbeitungs-Button -->
                 <button onclick="toggleEdit()" class="mdl-button mdl-js-button mdl-button--icon">
     <i class="material-icons edit-icon">edit</i>
 </button>
             </h2>
+			 <!-- Weitere Kontaktinformationen -->
             <p>Firma: <?php echo $contact['company']; ?></p>
             <p>Email: <?php echo $contact['email']; ?></p>
             <p>Telefonnummer: <?php echo $fullPhoneNumber; ?></p>
             <p>Adresse: <?php echo $contact['address']; ?></p>
 			<p><?php echo $contact['address2']; ?></p>
+			<!-- Zurück zur Kontaktliste -->
             <a href="index.php" class="mdl-button mdl-js-button mdl-button--blue">Zurück zur Kontaktliste</a>
         </div>
-
+        <!-- Bearbeitungsformular, standardmäßig versteckt -->
         <div class="mdl-card mdl-shadow--2dp" style="margin: 2em; padding: 2em; display:none;" id="editForm">
+		 <!-- Lösch-Button -->
             <button onclick="confirmDelete()" class="mdl-button mdl-js-button mdl-button--icon">
                 <i class="material-icons delete-icon">delete</i>
             </button>
+		  <!-- Formular zum Aktualisieren der Kontaktinformationen -->
             <form action="update_contact.php" method="post" enctype="multipart/form-data">
                 <div class="mdl-textfield mdl-js-textfield">
                     Anrede: <input class="mdl-textfield__input" type="text" name="salutation" value="<?php echo $contact['salutation']; ?>">
@@ -226,16 +241,16 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
                     Ort: <input class="mdl-textfield__input" type="text" name="city" value="<?php echo $contact['city']; ?>">
                 </div>
 				
-				<div class="mdl-textfield mdl-js-textfield">
-    Längengrad: <input class="mdl-textfield__input" type="text" id="geo_long" name="geo_long" value="<?php echo $contact['geo_long']; ?>" oninput="validateGeoInput(event)">
+	<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+    <input class="mdl-textfield__input" type="text" id="geo_long" name="geo_long" value="<?php echo $contact['geo_long']; ?>" oninput="validateGeoInput(event)">
     <label class="mdl-textfield__label" for="geo_long">Geografische Länge (Longitude)</label>
 </div>
 
-<div class="mdl-textfield mdl-js-textfield">
-    Breitengrad: <input class="mdl-textfield__input" type="text" id="geo_lat" name="geo_lat" value="<?php echo $contact['geo_lat']; ?>" oninput="validateGeoInput(event)">
+<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+    <input class="mdl-textfield__input" type="text" id="geo_lat" name="geo_lat" value="<?php echo $contact['geo_lat']; ?>" oninput="validateGeoInput(event)">
     <label class="mdl-textfield__label" for="geo_lat">Geografische Breite (Latitude)</label>
 </div>
-				
+		
 				
                 <div class="mdl-textfield mdl-js-textfield">
                     Bild:(Max. 5MB, JPEG, PNG, GIF, SVG) <input class="mdl-textfield__input" type="file" name="image">
@@ -248,32 +263,38 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
     </main>
 </div>
 
+<!-- Kartencontainer für OpenStreetMap -->
 <div id="osm-map"></div>
-
+<!-- Einbindung der Leaflet-Bibliothek für die Kartenfunktionalität -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-
+<!-- Material Design Lite Bibliothek -->
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 <script>
 
-
+// Event-Listener, der darauf wartet, dass das DOM vollständig geladen ist
 document.addEventListener('DOMContentLoaded', function() {
+// Geografische Daten des Kontakts aus PHP-Variablen holen
     var lat = <?php echo json_encode($contact['geo_lat']); ?>;
     var lng = <?php echo json_encode($contact['geo_long']); ?>;
     
+// Überprüfen, ob die geografischen Daten gültig sind
     if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
         console.error("Ungültige oder fehlende geografische Daten.");
         return;
     }
 
+// OpenStreetMap-Karte initialisieren und auf die geografischen Daten des Kontakts zentrieren
     var map = L.map('osm-map').setView([lat, lng], 13);
 
+// OpenStreetMap-Layer zur Karte hinzufügen
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
+// Marker auf der Karte an der Position des Kontakts platzieren und Popup mit Informationen anzeigen
     L.marker([lat, lng]).addTo(map)
         .bindPopup('Hier ist der Kontakt: ' + <?php echo json_encode($contact['first_name'] . ' ' . $contact['last_name']); ?> + '.<br> Adresse: ' + <?php echo json_encode($contact['address']); ?>)
         .openPopup();
@@ -282,17 +303,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
+// Funktion zur Validierung der Eingabe geografischer Daten
    function validateGeoInput(event) {
         // Ersetzt Kommas durch Punkte
         event.target.value = event.target.value.replace(/,/g, '.');
     }
-
+	
+// Funktion zum Umschalten zwischen Detailansicht und Bearbeitungsformular
        function toggleEdit() {
         var details = document.getElementById('details');
         var editForm = document.getElementById('editForm');
         var deleteIcon = document.querySelector('.delete-icon');
 
+// Umschalten zwischen Anzeigen und Verbergen des Bearbeitungsformulars
         if (editForm.style.display === 'none') {
             editForm.style.display = 'block';
             details.style.display = 'none';
@@ -305,10 +328,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-
+// Funktion zur Bestätigung des Löschens eines Kontakts
      function confirmDelete() {
         var confirmation = confirm("Sind Sie sicher, dass Sie diesen Kontakt löschen möchten?");
         if (confirmation) {
+// Bei Bestätigung zur Lösch-URL weiterleiten
             window.location.href = 'delete_contact.php?id=<?php echo $contactId; ?>';
         }
     }
