@@ -99,6 +99,17 @@ if (!$contact) {
                 <input class="mdl-textfield__input" type="text" id="city" name="city" value="<?php echo $contact['city']; ?>">
                 <label class="mdl-textfield__label" for="city">Ort</label>
             </div>
+			
+   <div class="mdl-textfield mdl-js-textfield">
+        <input class="mdl-textfield__input" type="text" id="geo_long" name="geo_long" value="<?php echo $contact['geo_long']; ?>" oninput="validateGeoInput(event)">
+        <label class="mdl-textfield__label" for="geo_long">Geografische Länge (Longitude)</label>
+    </div>
+
+    <div class="mdl-textfield mdl-js-textfield">
+        <input class="mdl-textfield__input" type="text" id="geo_lat" name="geo_lat" value="<?php echo $contact['geo_lat']; ?>" oninput="validateGeoInput(event)">
+        <label class="mdl-textfield__label" for="geo_lat">Geografische Breite (Latitude)</label>
+    </div>
+
 
             <div class="mdl-textfield mdl-js-textfield">
                 Bild:(Max. 5MB, JPEG, PNG, GIF, SVG) <input type="file" name="image"> <!-- Changed the name attribute to "image" to match update_contact.php -->
@@ -114,5 +125,13 @@ if (!$contact) {
 </div>
 
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+<script>
+        function validateGeoInput(event) {
+            // Ersetzt Kommas durch Punkte
+            event.target.value = event.target.value.replace(/,/g, '.');
+        }
+    </script>
+	
 </body>
 </html>

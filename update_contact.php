@@ -1,3 +1,27 @@
+<head>
+  
+    <style>
+        .mdl-button--colored {
+            background-color: #009688; /* Wählen Sie eine Farbe, die zu Ihrem Design passt */
+            color: white;
+        }
+
+        .mdl-button--colored:hover {
+            background-color: #00796b; /* Dunklere Farbe für Hover-Effekt */
+        }
+		    .error-message {
+        color: red; /* Rot für Fehlermeldungen */
+        margin-bottom: 10px; /* Etwas Abstand unter der Nachricht */
+        font-weight: bold; /* Optional: Text fett machen */
+    }
+    </style>
+	
+	<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+</head>
+
+
 <?php
 // Enable error reporting
 ini_set('display_errors', 1);
@@ -13,14 +37,13 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check if all the required fields are set
-    if (isset($_POST['id'], $_POST['postal_code'], $_POST['street'], $_POST['house_number'],$_POST['city'], $_POST['first_name'], $_POST['last_name'], $_POST['salutation'], $_POST['company'], $_POST['email'], $_POST['country_code'], $_POST['area_code'], $_POST['phone'])) {
+    if (isset($_POST['id'], $_POST['postal_code'], $_POST['street'], $_POST['house_number'], $_POST['city'], $_POST['first_name'], $_POST['last_name'], $_POST['salutation'], $_POST['company'], $_POST['email'], $_POST['country_code'], $_POST['area_code'], $_POST['phone'], $_POST['geo_long'], $_POST['geo_lat'])) {
         // Assigning posted values to variables
-       
-	    $id = $_POST['id'];
+        $id = $_POST['id'];
         $postal_code = $_POST['postal_code'];
-       $street =  $_POST['street'];
-       $house_number = $_POST['house_number'];
-       $city = $_POST['city'];
+        $street = $_POST['street'];
+        $house_number = $_POST['house_number'];
+        $city = $_POST['city'];
         $salutation = $_POST['salutation'];
         $first_name = $_POST['first_name'];
         $last_name = $_POST['last_name'];
@@ -29,9 +52,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $country_code = $_POST['country_code'];
         $area_code = $_POST['area_code'];
         $phone = $_POST['phone'];
-        $address =  $_POST['street'].' '.$_POST['house_number'];
-		$address2 = $_POST['postal_code'].' '.$_POST['city'];
-  
+$geo_long = str_replace(',', '.', $_POST['geo_long']);
+$geo_lat = str_replace(',', '.', $_POST['geo_lat']);
+        $address = $street . ' ' . $house_number;
+        $address2 = $postal_code . ' ' . $city;
+		
+if (!is_numeric($geo_long) || $geo_long < -180 || $geo_long > 180) {
+    echo "<p class='error-message'>Ungültiger Längengrad.</p>";
+    echo '<a href="http://localhost/server/index.php" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Zurück zur Startseite</a>';
+    exit;
+}
+
+if (!is_numeric($geo_lat) || $geo_lat < -90 || $geo_lat > 90) {
+    echo "<p class='error-message'>Ungültiger Breitengrad.</p>";
+    echo '<a href="http://localhost/server/index.php" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Zurück zur Startseite</a>';
+    exit;
+}
+
+
 
      $imagePath = '';
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -45,8 +83,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           // Validate file extension
 if (!in_array($fileExtension, $allowedExtensions)) {
     // Instead of terminating the script with die(), we display an error message and provide a button to go back to the homepage
-    echo '<p>Nicht unterstützte Dateierweiterung!</p>'; // Display error message
-    echo '<a href="http://localhost/server/index.php"><button>Zurück zur Startseite</button></a>'; // Display return button
+echo '<p class="error-message">Nicht unterstützte Dateierweiterung!</p>'; // Display error message with custom style
+echo '<a href="http://localhost/server/index.php" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Zurück zur Startseite</a>'; // MDL styled return button
+
     exit; // Ensure script stops executing further
 }
 
@@ -68,8 +107,8 @@ if (!in_array($fileExtension, $allowedExtensions)) {
             }
         }
 
-    $sql = "UPDATE contacts SET salutation = ?, first_name = ?, last_name = ?, company = ?, email = ?, country_code = ?, area_code = ?, phone = ?, address = ? , street = ? , postal_code = ? , city = ? , house_number = ?, address2 = ?";
-        $data = [$salutation, $first_name, $last_name, $company, $email, $country_code, $area_code, $phone, $address , $street , $postal_code , $city, $house_number, $address2];
+      $sql = "UPDATE contacts SET salutation = ?, first_name = ?, last_name = ?, company = ?, email = ?, country_code = ?, area_code = ?, phone = ?, address = ?, street = ?, postal_code = ?, city = ?, house_number = ?, address2 = ?, geo_long = ?, geo_lat = ?";
+        $data = [$salutation, $first_name, $last_name, $company, $email, $country_code, $area_code, $phone, $address, $street, $postal_code, $city, $house_number, $address2, $geo_long, $geo_lat];
 
         if (!empty($imagePath)) {
             $sql .= ", image = ?";
@@ -82,7 +121,7 @@ if (!in_array($fileExtension, $allowedExtensions)) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($data);
 
-        // Überprüfen von Datenbankfehlern
+        // Check for database errors
         if ($stmt->errorInfo()[1]) {
             die("Datenbankfehler: " . $stmt->errorInfo()[2]);
         }
@@ -97,4 +136,17 @@ if (!in_array($fileExtension, $allowedExtensions)) {
         echo "Einige notwendige Felder fehlen.";
     }
 }
+
+if (!is_numeric($geo_long) || $geo_long < -180 || $geo_long > 180) {
+    echo '<p class="error-message">Ungültiger Längengrad.</p>';
+    echo '<a href="http://localhost/server/index.php" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Zurück zur Startseite</a>';
+    exit;
+}
+
+if (!is_numeric($geo_lat) || $geo_lat < -90 || $geo_lat > 90) {
+    echo '<p class="error-message">Ungültiger Breitengrad.</p>';
+    echo '<a href="http://localhost/server/index.php" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">Zurück zur Startseite</a>';
+    exit;
+}
+
 ?>

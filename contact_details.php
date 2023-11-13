@@ -30,6 +30,23 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <style>
+	
+	.contact-details, #map {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.contact-details {
+    width: 45%;
+    margin-right: 5%;
+}
+
+#map {
+    width: 50%;
+    height: 400px; /* Höhe der Karte anpassen */
+}
+
+
         /* Ihr CSS-Code hier */
         body {
             background-color: #f4f4f4;
@@ -137,9 +154,16 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
             text-decoration: none;
             cursor: pointer;
         }
+		   #osm-map {
+            width: 45%; /* oder eine andere geeignete Breite */
+            height: 300px; /* Höhe der Karte */
+            margin: 1em auto; /* Zentriert die Karte auf der Seite */
+        }
     </style>
 </head>
 <body>
+
+
 <div class="mdl-layout mdl-js-layout">
     <main class="mdl-layout__content">
         <div class="mdl-card mdl-shadow--2dp" style="margin: 2em; padding: 2em;" id="details">
@@ -148,8 +172,8 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
             <h2 class="contact-info">
                 <?php echo $contact['salutation'] . ' ' . $contact['first_name'] . ' ' . $contact['last_name']; ?>
                 <button onclick="toggleEdit()" class="mdl-button mdl-js-button mdl-button--icon">
-                    <i class="material-icons edit-icon">edit</i>
-            </button>
+    <i class="material-icons edit-icon">edit</i>
+</button>
             </h2>
             <p>Firma: <?php echo $contact['company']; ?></p>
             <p>Email: <?php echo $contact['email']; ?></p>
@@ -201,6 +225,18 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
 				<div class="mdl-textfield mdl-js-textfield">
                     Ort: <input class="mdl-textfield__input" type="text" name="city" value="<?php echo $contact['city']; ?>">
                 </div>
+				
+				<div class="mdl-textfield mdl-js-textfield">
+    Längengrad: <input class="mdl-textfield__input" type="text" id="geo_long" name="geo_long" value="<?php echo $contact['geo_long']; ?>" oninput="validateGeoInput(event)">
+    <label class="mdl-textfield__label" for="geo_long">Geografische Länge (Longitude)</label>
+</div>
+
+<div class="mdl-textfield mdl-js-textfield">
+    Breitengrad: <input class="mdl-textfield__input" type="text" id="geo_lat" name="geo_lat" value="<?php echo $contact['geo_lat']; ?>" oninput="validateGeoInput(event)">
+    <label class="mdl-textfield__label" for="geo_lat">Geografische Breite (Latitude)</label>
+</div>
+				
+				
                 <div class="mdl-textfield mdl-js-textfield">
                     Bild:(Max. 5MB, JPEG, PNG, GIF, SVG) <input class="mdl-textfield__input" type="file" name="image">
                     <img src="<?php echo !empty($contact['image']) ? $contact['image'] : 'server/contacts.png'; ?>" alt="Kontaktbild" style="width:100px;">
@@ -212,39 +248,47 @@ $fullPhoneNumber = $contact['country_code'] . ' ' . $contact['area_code'] . ' ' 
     </main>
 </div>
 
-<!-- The Modal -->
-<div id="myModal" class="modal">
-    <span class="close">&times;</span>
-    <img class="modal-content" id="img01">
-    <div id="caption"></div>
-</div>
+<div id="osm-map"></div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
 
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    var img = document.getElementById("myImg");
-    var modal = document.getElementById("myModal");
-    var modalImg = document.getElementById("img01");
-    var captionText = document.getElementById("caption");
-    var span = document.getElementsByClassName("close")[0];
 
-    // Nur wenn 'myImg' existiert, fügen Sie den Klick-Event-Listener hinzu.
-if (img) {
-    img.onclick = function() {
-        modal.style.display = "block";
-        modalImg.src = this.src;
-        captionText.innerHTML = this.alt;
-    }
-}
 
-    if (span) {
-        // Wenn das (x) angeklickt wird, schließen Sie das Modal
-        span.onclick = function() {
-            modal.style.display = "none";
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    var lat = <?php echo json_encode($contact['geo_lat']); ?>;
+    var lng = <?php echo json_encode($contact['geo_long']); ?>;
+    
+    if (!lat || !lng || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        console.error("Ungültige oder fehlende geografische Daten.");
+        return;
     }
+
+    var map = L.map('osm-map').setView([lat, lng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([lat, lng]).addTo(map)
+        .bindPopup('Hier ist der Kontakt: ' + <?php echo json_encode($contact['first_name'] . ' ' . $contact['last_name']); ?> + '.<br> Adresse: ' + <?php echo json_encode($contact['address']); ?>)
+        .openPopup();
 });
-    function toggleEdit() {
+
+
+
+
+
+   function validateGeoInput(event) {
+        // Ersetzt Kommas durch Punkte
+        event.target.value = event.target.value.replace(/,/g, '.');
+    }
+
+       function toggleEdit() {
         var details = document.getElementById('details');
         var editForm = document.getElementById('editForm');
         var deleteIcon = document.querySelector('.delete-icon');
@@ -260,7 +304,9 @@ if (img) {
         }
     }
 
-    function confirmDelete() {
+
+
+     function confirmDelete() {
         var confirmation = confirm("Sind Sie sicher, dass Sie diesen Kontakt löschen möchten?");
         if (confirmation) {
             window.location.href = 'delete_contact.php?id=<?php echo $contactId; ?>';
